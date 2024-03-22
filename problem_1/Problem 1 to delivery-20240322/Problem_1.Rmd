@@ -1,0 +1,93 @@
+---
+title: "Problem_1"
+author: "Pol Parra"
+date: "2024-03-22"
+output: html_document
+---
+
+
+
+```{r}
+install.packages("openxlsx")
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+train_data <- read.csv("train.csv")
+head(train_data)
+```
+
+1. Select only the variables of interest.
+2. Transform the response variable so that you have Saleprice in  tens of thousands of dollars.
+     
+```{r}
+variables_of_interest <- train_data[, c("SalePrice", "CentralAir", "KitchenQual")]
+variables_of_interest$SalePrice <- variables_of_interest$SalePrice / 10000
+head(variables_of_interest)
+```
+
+
+3. Consider only the levels "Gd", "Fa" and "TA" in the variable "kitchenqual", transforming the level "Ex" to "Gd".
+
+KitchenQual: Kitchen quality
+
+       Ex	Excellent
+       Gd	Good
+       TA	Typical/Average
+       Fa	Fair
+       Po	Poor
+
+```{r}
+variables_of_interest$KitchenQual <- ifelse(variables_of_interest$KitchenQual == "Ex", "Gd", variables_of_interest$KitchenQual)
+variables_of_interest <- subset(variables_of_interest, KitchenQual %in% c("Gd", "Fa", "TA"))
+head(variables_of_interest)
+```
+
+print(variables_of_interest)
+
+
+
+4. In order to have a balanced analysis, you randomly select 6 observations from the different groups.
+
+--> Observations: Y/N central Air * 3 Groups (Ex, Gd, TA) * 6 observations each = 36 items
+
+
+
+
+```{r}
+library(dplyr)
+balanced_sample <- variables_of_interest %>%
+  group_by(CentralAir, KitchenQual) %>%
+  sample_n(6, replace = TRUE) %>% 
+  ungroup() 
+
+View(balanced_sample)
+```
+
+
+Exporting the data balanced to Excel in order to start our ANOVA - Regression Study.
+
+```{r}
+library(openxlsx)
+write.xlsx(balanced_sample, "/Users/polparracatalan/Downloads/house-prices-advanced-regression-techniques/balanced_sample.xlsx")
+```
+
+
+
+
+
+
+
+
+
+
