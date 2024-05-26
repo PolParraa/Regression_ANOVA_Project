@@ -1,0 +1,580 @@
+---
+title: "HA2"
+author: "Martina, Pol, Niklas"
+date: "2024-05-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Problem 2: Linear Regression 
+
+```{r}
+data <- read.csv('train.csv')
+columns_to_keep <- c("LotArea", "YearBuilt", "YearRemodAdd", "MasVnrArea", "SalePrice",
+                     "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF", "X1stFlrSF", "X2ndFlrSF",
+                     "LowQualFinSF", "BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath",
+                     "BedroomAbvGr", "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces", "GarageCars",
+                     "GarageArea", "WoodDeckSF", "OpenPorchSF", "EnclosedPorch", "X3SsnPorch",
+                     "ScreenPorch", "PoolArea", "MiscVal", "MoSold", "YrSold", "MSSubClass",
+                     "MSZoning", "Street", "LotShape", "LandContour", "Utilities", "LotConfig",
+                     "LandSlope", "Neighborhood", "Condition1", "Condition2", "BldgType",
+                     "HouseStyle", "OverallQual", "OverallCond", "RoofStyle", "RoofMatl",
+                     "Exterior1st", "Exterior2nd", "MasVnrType", "ExterQual", "ExterCond",
+                     "Foundation", "Heating", "HeatingQC", "CentralAir", "Electrical",
+                     "KitchenQual", "Functional", "PavedDrive", "SaleType", "SaleCondition")
+
+data <- data[, columns_to_keep]
+head(data)
+```
+
+
+*Check for missing values*
+```{r}
+missing_rows <- rowSums(is.na(data))
+total_missing_rows <- sum(missing_rows > 0)
+total_missing_rows
+```
+
+
+```{r}
+data_clean <- na.omit(data)
+dim(data)
+dim(data_clean)
+```
+
+## 2.2 For ease of analysis, it is useful to convert the target into tens of thousands of dollars by dividing the target values by 10000.
+
+
+```{r}
+data_clean$SalePrice <- data_clean$SalePrice / 10000
+```
+
+
+## 2.3 For continuous predictors, assess the existence of multicollinearity and, analyse which are the most interesting and the type of impact (positive or negative) on the target variable.
+
+
+```{r}
+f_full_cont <- SalePrice ~ LotArea + YearBuilt + YearRemodAdd + MasVnrArea + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + X1stFlrSF + X2ndFlrSF + LowQualFinSF + BsmtFullBath + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + TotRmsAbvGrd + Fireplaces + GarageCars + GarageArea + WoodDeckSF + OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + MiscVal + MoSold + YrSold
+
+f_null <- SalePrice ~ 1
+```
+
+
+
+```{r}
+library(car)
+m_full_cont <- lm(f_full_cont, data_clean)
+m_null <- lm(f_null, data_clean)
+```
+
+
+
+```{r}
+summary(m_full_cont)
+```
+
+**I am too lazy to write my own so...ChatGPT: Analysis of the Most Interesting Predictors and Their Impact on the Target Variable
+The summary output of the linear model provides several pieces of crucial information that allow us to assess the impact of each predictor on the target variable, SalePrice. Here, we'll focus on identifying the most interesting predictors based on their significance and the type of impact (positive or negative) they have on SalePrice.
+
+Key Predictors and Their Impacts
+
+
+LotArea:
+Estimate: 
+3.263 × 10−53.263×10^{−5}
+p-value: 0.002802 (**)
+Impact: Positive
+Comment: For each additional unit increase in LotArea, SalePrice increases slightly. LotArea is significant and positively impacts the SalePrice.
+
+YearBuilt:
+Estimate: 0.03592
+p-value: 6.08e-10 (***)
+Impact: Positive
+Comment: Newer houses tend to have higher SalePrices. The positive and significant effect indicates that for each additional year, the SalePrice increases.
+
+YearRemodAdd:
+Estimate: 0.04677
+p-value: 8.97e-13 (***)
+Impact: Positive
+Comment: Houses that have been remodeled more recently have higher SalePrices. This is a significant positive predictor.
+
+MasVnrArea:
+Estimate: 0.003801
+p-value: 5.04e-09 (***)
+Impact: Positive
+Comment: The larger the masonry veneer area, the higher the SalePrice. This predictor is significant and positively impacts SalePrice.
+
+BsmtFinSF1:
+Estimate: 0.003056
+p-value: 1.53e-09 (***)
+Impact: Positive
+Comment: Finished basement area positively impacts SalePrice significantly.
+
+X1stFlrSF:
+Estimate: 0.005533
+p-value: < 2e-16 (***)
+Impact: Positive
+Comment: The first floor square footage has a significant positive impact on SalePrice.
+
+X2ndFlrSF:
+Estimate: 0.005557
+p-value: < 2e-16 (***)
+Impact: Positive
+Comment: The second floor square footage also positively affects SalePrice.
+
+BsmtFullBath:
+Estimate: 0.7516
+p-value: 0.008096 (**)
+Impact: Positive
+Comment: The presence of a full bathroom in the basement positively impacts SalePrice.
+
+TotRmsAbvGrd:
+Estimate: 0.7104
+p-value: 1.27e-07 (***)
+Impact: Positive
+Comment: The total number of rooms above grade significantly increases the SalePrice.
+
+Fireplaces:
+Estimate: 0.7395
+p-value: 0.000119 (***)
+Impact: Positive
+Comment: The presence of fireplaces is positively associated with higher SalePrice.
+
+GarageCars:
+Estimate: 1.415
+p-value: 5.16e-06 (***)
+Impact: Positive
+Comment: The number of cars the garage can hold is a significant positive predictor of SalePrice.
+
+ScreenPorch:
+Estimate: 0.006539
+p-value: 0.000496 (***)
+Impact: Positive
+Comment: Screened porches positively affect SalePrice.
+
+BedroomAbvGr:
+Estimate: -1.173
+p-value: 1.02e-10 (***)
+Impact: Negative
+Comment: Surprisingly, the number of bedrooms above grade has a significant negative impact on SalePrice. This could be due to a non-linear relationship or interactions with other variables not captured in the model.
+
+KitchenAbvGr:
+Estimate: -3.950
+p-value: 6.23e-14 (***)
+Impact: Negative
+Comment: Similar to bedrooms, the number of kitchens above grade has a negative impact on SalePrice, which might be due to higher variability in kitchen quality or the layout.
+
+
+*The Variance Inflation Factor (VIF)*
+```{r}
+vif(m_full_cont)  
+```
+
+
+*ChatGPT: The Variance Inflation Factor (VIF) is used to detect multicollinearity in regression models. Multicollinearity occurs when predictor variables are highly correlated with each other, which can affect the stability and interpretation of the regression coefficients. A high VIF indicates that a predictor variable has a strong linear relationship with one or more of the other predictors.*
+
+Lets consider high multicollinearity for the variables with VIF >=5.
+Based on this criteria we can consider as highly multicollinear following variables: BsmtFinSF1, X1stFlrSF, X2ndFlrSF, GarageCars, GarageArea
+(if you want we can choose different threshold than 5)
+
+
+
+## 2.4 For categorical predictors do the previous analysis but still understand if it is possible to agglutinate categories and check if all categories have information for the target.
+
+```{r}
+categ_vars <- c("MSSubClass", "MSZoning", "Street", "LotShape", "LandContour",
+                      "Utilities", "LotConfig", "LandSlope", "Neighborhood", "Condition1",
+                      "Condition2", "BldgType", "HouseStyle", "OverallQual", "OverallCond",
+                      "RoofStyle", "RoofMatl", "Exterior1st", "Exterior2nd", "MasVnrType",
+                      "ExterQual", "ExterCond", "Foundation", "Heating", "HeatingQC",
+                      "CentralAir", "Electrical", "KitchenQual", "Functional", "PavedDrive",
+                      "SaleType", "SaleCondition")
+
+data_clean[categ_vars] <- lapply(data_clean[categ_vars], factor)
+
+# check if they are set to categorical
+str(data_clean[categ_vars])
+```
+
+*Creating dummy variables* 
+We use dummy variables in regression analysis to represent categorical data numerically. This allows the inclusion of categorical predictors in the model. Dummy variables convert categories into a series of binary (0 or 1) indicators, allowing the regression model to interpret and assess the effect of each category on the target variable. By using dummies, we can quantify the impact of different categories and make the model capable of handling both numerical and categorical data.
+
+```{r}
+data_dummies <- model.matrix(~.-1, data = data_clean[categ_vars])
+
+# Combine dummy variables with original data
+data_clean_with_dummies <- cbind(data_clean, data_dummies)
+str(data_clean_with_dummies)
+```
+
+
+```{r}
+f_full_cat <- SalePrice ~ MSSubClass + MSZoning + Street + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + OverallCond + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + ExterQual + ExterCond + Foundation + Heating + HeatingQC + CentralAir + Electrical + KitchenQual + Functional + PavedDrive + SaleType + SaleCondition
+
+m_full_cat <- lm(f_full_cat, data_clean_with_dummies)
+
+summary(m_full_cat)
+```
+
+
+# Key Points from the Output:
+## Residuals:
+
+The residuals show a fairly typical spread, with a minimum of -13.389 and a maximum of 22.379. The median residual is -0.173, indicating a relatively symmetrical distribution around zero.
+
+##Coefficients:
+
+Many coefficients are significant at various levels. Variables with significant positive or negative impacts on the dependent variable can be identified using p-values.
+
+## Significance:
+
+Variables with ***, **, or * next to their p-values are significant at the 0.001, 0.01, and 0.05 levels, respectively.
+A few examples of significant variables include:
+OverallQual10 (Estimate: 23.49290, p-value: 3.51e-08)
+OverallQual9 (Estimate: 14.77711, p-value: 0.000363)
+NeighborhoodNoRidge (Estimate: 5.51013, p-value: 1.08e-06)
+RoofMatlCompShg (Estimate: 33.38170, p-value: < 2e-16)
+
+##Multicollinearity:
+
+Some variables have been excluded due to singularities (NA in coefficients), indicating potential multicollinearity. These variables are: BldgTypeDuplex and Exterior2ndCBlock
+
+##Model Fit:
+
+The multiple R-squared value is 0.8526, and the adjusted R-squared is 0.8303. This indicates that the model explains a substantial portion of the variability in the dependent variable.
+The F-statistic is 38.14 with a p-value of < 2.2e-16, suggesting that the overall model is highly significant
+
+*Check for multicollinearity*
+
+```{r}
+alias(m_full_cat)
+```
+
+The output from the alias function shows that two predictors, BldgTypeDuplex and Exterior2ndCBlock, are perfectly collinear with other variables in your model. This means that these predictors can be exactly expressed as linear combinations of the other predictors, causing multicollinearity issues.
+
+Considering that BldgType and Exterior2nd are also non-significant variables, we will remove them completely from the model
+
+```{r}
+f_cat_mod <- SalePrice ~ MSSubClass + MSZoning + Street + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + HouseStyle + OverallQual + OverallCond + RoofStyle + RoofMatl + Exterior1st + MasVnrType + ExterQual + ExterCond + Foundation + Heating + HeatingQC + CentralAir + Electrical + KitchenQual + Functional + PavedDrive + SaleType + SaleCondition
+```
+
+Recreate the dataset with dummies
+
+```{r}
+# Exclude BldgType and Exterior2nd from the list of categorical variables
+categ_vars_modified <- setdiff(categ_vars, c("BldgType", "Exterior2nd"))
+
+# Create dummy variables excluding BldgType and Exterior2nd
+data_dummies <- model.matrix(~ . - 1, data = data_clean[categ_vars_modified])
+
+# Combine dummy variables with original data
+data_clean_with_dummies <- cbind(data_clean, data_dummies)
+str(data_clean_with_dummies)
+```
+
+```{r}
+m_cat_mod <- lm(f_cat_mod, data_clean_with_dummies)
+summary(m_cat_mod)
+```
+
+Significant variables to consider: MSSubClass, MSZoning, LotConfig, Neighborhood, OverallQual, RoofMatl, Exterior1st(?), Foundation, KitchenQual and CentralAir.
+
+*The Variance Inflation Factor (VIF)*
+```{r}
+vif(m_cat_mod)
+```
+
+The high General Variance Inflation Factor (GVIF) values are expected, since we are using dummy variables. This is because dummy variables are often highly correlated with each other, as they represent different levels of the same categorical variable. But visibly high GVIF can be seen with variables MSSubClass, Neighborhood and HouseStyle.
+
+*Creation of new variables by aggregating*
+
+```{r}
+# Aggregation for MSSubClass
+data_clean$MSSubClass <- as.factor(ifelse(data_clean$MSSubClass %in% c("30", "45", "50"), "LowTier", 
+                                              ifelse(data_clean$MSSubClass %in% c("60", "75", "120"), "MidTier", "HighTier")))
+
+summary(data_clean$MSSubClass)
+```
+
+```{r}
+# Aggregation for Neighborhood, given by CHGPT, the locations are not checked if its correct
+# map to check: chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.cityofames.org/home/showpublisheddocument/1024/637356764775500000
+data_clean$Neighborhood <- as.factor(ifelse(data_clean$Neighborhood %in% c("NAmes", "NWAmes", "NPkVill", "Veenker"), "North", 
+                                      ifelse(data_clean$Neighborhood %in% c("CollgCr", "Gilbert", "Mitchel"), "Central", 
+                                      ifelse(data_clean$Neighborhood %in% c("OldTown", "Edwards", "BrkSide", "BrDale", "IDOTRR", "SWISU"), "East", 
+                                      ifelse(data_clean$Neighborhood %in% c("Somerst", "NridgHt", "ClearCr", "StoneBr", "Timber"), "West", "South")))))
+summary(data_clean$Neighborhood)
+
+```
+
+
+```{r}
+# Aggregation for Exterior1st
+data_clean$Exterior1st <- as.factor(ifelse(data_clean$Exterior1st %in% c("Wd Sdng", "WdShing"), "Wood", 
+                                     ifelse(data_clean$Exterior1st %in% c("VinylSd", "Plywood"), "VinylPly", "Other")))
+summary(data_clean$Exterior1st)
+
+```
+
+
+```{r}
+# Aggregation for OverallQual
+data_clean$OverallQual <- as.factor(ifelse(data_clean$OverallQual %in% c("2", "3", "4"), "Low", 
+                                     ifelse(data_clean$OverallQual %in% c("5", "6", "7"), "Medium", "High")))
+summary(data_clean$OverallQual)
+```
+
+
+```{r}
+# Aggregation for SaleType
+data_clean$SaleType <- as.factor(ifelse(data_clean$SaleType %in% c("WD", "CWD", "VWD"), "Warranty_Deed", 
+                                  ifelse(data_clean$SaleType %in% c("Con", "ConLw", "ConLI", "ConLD"), "Contract_Sale", 
+                                  ifelse(data_clean$SaleType %in% c("New", "COD", "Oth"), "Other", NA))))
+
+# Summary of aggregated SaleType
+summary(data_clean$SaleType)
+
+```
+
+
+# 2.5 Analyze the model with all variables and test its usefulness.
+
+```{r}
+f_full_combined <- SalePrice ~ LotArea + YearBuilt + YearRemodAdd + MasVnrArea + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + X1stFlrSF + X2ndFlrSF + LowQualFinSF + BsmtFullBath + BsmtHalfBath + FullBath + HalfBath + BedroomAbvGr + KitchenAbvGr + TotRmsAbvGrd + Fireplaces + GarageCars + GarageArea + WoodDeckSF + OpenPorchSF + EnclosedPorch + X3SsnPorch + ScreenPorch + PoolArea + MiscVal + MoSold + YrSold + MSSubClass + MSZoning + Street + LotShape + LandContour + Utilities + LotConfig + LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + HouseStyle + OverallQual + OverallCond + RoofStyle + RoofMatl + Exterior1st + Exterior2nd + MasVnrType + ExterQual + ExterCond + Foundation + Heating + HeatingQC + CentralAir + Electrical + KitchenQual + Functional + PavedDrive + SaleType + SaleCondition
+
+```
+
+```{r}
+m_full_combined <- lm(f_full_combined, data_clean)
+summary(m_full_combined)
+```
+
+
+The model exhibits a strong overall fit, supported by various metrics. The residuals range from -19.7854 to 19.7854, with quartiles at -1.0409 and 1.0381, indicating reasonable accuracy on average but the presence of outliers. The residual standard error (RSE) stands at 2.472, suggesting typical deviations of about 2.472 units from actual values. The multiple R-squared value of 0.9139 signifies that approximately 91.39% of the variance in house prices is explained by the model's predictor variables, with the adjusted R-squared value at 0.9029. This suggests that the inclusion of some predictor variables may not significantly enhance explanatory power. The F-statistic of 82.67 with a p-value < 2.2e-16 confirms the model's statistical significance. However, further investigation into residual patterns and outliers is advised, along with consideration of individual predictor variables' interpretability and significance, to ensure robust predictions, particularly outside the observed data range.
+
+For significance in this model we will consider variables with p-val<0.05... ones with at least one *.. when considering the categorical variables, we only include ones where at least half of the categories is significant.
+
+Reduced model will contain: LotArea, YearBuilt, MasVnrArea, BsmtFinSF1, BsmtFinSF2, BsmtUnfSF, X1stFlrSF, X2ndFlrSF, BedroomAbvGr, KitchenAbvGr, Fireplaces, WoodDeckSF, ScreenPorch, PoolArea, MSZoning, Street, LandSlope, Neighborhood, BldgType, OverallQual, RoofMatl, ExterQual, KitchenQual, Functional
+
+this is still so fcking much....
+
+
+```{r}
+f_full_reduced <- SalePrice ~ LotArea + YearBuilt + MasVnrArea + BsmtFinSF1 + BsmtFinSF2 + BsmtUnfSF + X1stFlrSF + X2ndFlrSF + BedroomAbvGr + KitchenAbvGr + Fireplaces + WoodDeckSF + ScreenPorch + PoolArea + MSZoning + Street + LandSlope + Neighborhood  + BldgType + OverallQual + RoofMatl + ExterQual + KitchenQual + Functional
+```
+
+```{r}
+m_full_reduced <- lm(f_full_reduced, data_clean)
+summary(m_full_reduced)
+```
+
+this is quite nice but too large imo, myby we should discuss what else we can delete...
+
+This linear regression model demonstrates a strong fit with an adjusted R-squared of 0.872, suggesting that approximately 87.2% of the variance in the dependent variable is explained by the independent variables included in the model. Most of our variables showcase high signifivance (p < 0.05). Overall, the model appears robust, supported by a low residual standard error of 2.838 and a significant F-statistic (p < 2.2e-16), indicating that the model as a whole is statistically significant.
+
+
+```{r}
+anova(m_full_reduced, m_full_combined, test = "F")
+```
+
+
+
+# 2.6 Find a model that is parsimonious but has similar predictive ability to the previous one.
+
+stepAIC, that we used in class are not working, because of missing variables in some rows, but if we want to omit NA vals, it will delete the whole dataset because apparently everywhere at least one val missing which is bs...
+
+
+```{r}
+library(MASS)
+# Perform backward elimination to select a parsimonious model
+m_backward <- stepAIC(m_full_combined, scope = list (lower = m_null, upper = m_full_combined), direction = "backward", trace = TRUE)
+
+# Summary of the parsimonious model
+summary(m_backward$finalModel)
+
+```
+
+Backward method suggests to keep 35 variables: YearBuilt, MasVnrArea, BsmtFinSF1, BsmtFinSF2, BsmtUnfSF, X1stFlrSF, X2ndFlrSF, FullBath, BedroomAbvGr, KitchenAbvGr, Fireplaces, GarageCars, ScreenPorch, PoolArea, MoSold, MSZoning, Street, LandContour, Utilities, LotConfig, LandSlope, Neighborhood, Condition1, Condition2, BldgType, OverallQual, OverallCond, RoofStyle, RoofMatl, MasVnrType, ExterQual, Foundation, HeatingQC, KitchenQual, Functional, SaleCondition
+
+```{r}
+# Perform forward selection
+m_forward <- stepAIC(m_null, scope = list (lower = m_null, upper = m_full_combined), direction = "forward", trace = TRUE)
+# Summary of the parsimonious model
+summary(m_forward$FinalModel)
+```
+
+The Forward selection suggests to keep 34 variables: OverallQual, GarageCars, ExterQual, TotRmsAbvGrd, BsmtFinSF1, RoofMatl, Fireplaces, KitchenQual, Neighborhood, BldgType, FullBath, X1stFlrSF, X2ndFlrSF, Condition2, Functional, SaleCondition, YearBuilt, OverallCond, LotArea, Condition1, BedroomAbvGr, PoolArea, MasVnrArea, Foundation, LandSlope, MasVnrType, KitchenAbvGr, LotConfig, BsmtFinSF2, BsmtUnfSF, Street, ScreenPorch, RoofStyle, LandContour, MoSold, Utilities, MSZoning, HeatingQC, GarageArea
+
+
+```{r}
+# Perform bidirectional elimination to select a parsimonious model
+m_bidirectional <- stepAIC(m_null, scope = list (lower = m_null, upper = m_full_combined), direction = "both", trace = TRUE)
+
+# Summary of the parsimonious model
+summary(m_bidirectional$FinalModel)
+```
+
+The bidirectional model suggests to keep 33 variables: OverallQual, GarageCars, ExterQual, BsmtFinSF1, RoofMatl, Fireplaces, KitchenQual, Neighborhood, BldgType, FullBath, X1stFlrSF, X2ndFlrSF, Condition2, Functional, SaleCondition, YearBuilt, OverallCond, LotArea, Condition1, BedroomAbvGr, PoolArea, MasVnrArea, Foundation, LandSlope, MasVnrType, KitchenAbvGr, LotConfig, BsmtFinSF2, BsmtUnfSF, Street, ScreenPorch, RoofStyle, LandContour, MoSold, Utilities, HeatingQC, MSZoning
+
+```{r}
+AIC(m_forward, m_backward, m_bidirectional)
+```
+
+
+The AIC values for the forward, backward, and bidirectional selection methods are quite similar, with m_backward and m_bidirectional having the lowest AIC values, indicating better model fit compared to m_forward. Interestingly, both m_backward and m_bidirectional have the same AIC value, suggesting that they are equally effective in capturing the variability in the data while being more parsimonious than m_forward. This indicates that either the backward or bidirectional selection methods may be preferred for model selection, as they offer a better balance between model complexity and explanatory power.
+
+
+# 2.7 Use the residuals to evaluate the assumptions of the linear regression model.
+
+
+```{r}
+summary(m_full_reduced)
+```
+
+```{r}
+f_bw <- SalePrice ~ YearBuilt + MasVnrArea + BsmtFinSF1 + BsmtFinSF2 + 
+    BsmtUnfSF + X1stFlrSF + X2ndFlrSF + FullBath + BedroomAbvGr + 
+    KitchenAbvGr + Fireplaces + GarageCars + ScreenPorch + PoolArea + 
+    MoSold + MSZoning + Street + LandContour + Utilities + LotConfig + 
+    LandSlope + Neighborhood + Condition1 + Condition2 + BldgType + 
+    OverallQual + OverallCond + RoofStyle + RoofMatl + MasVnrType + 
+    ExterQual + Foundation + HeatingQC + KitchenQual + Functional + 
+    SaleCondition
+
+f_bi <- SalePrice ~ OverallQual + GarageCars + ExterQual + BsmtFinSF1 +
+    RoofMatl + Fireplaces + KitchenQual + Neighborhood + BldgType + 
+    FullBath + X1stFlrSF + X2ndFlrSF + Condition2 + Functional + 
+    SaleCondition + YearBuilt + OverallCond + LotArea + Condition1 + 
+    BedroomAbvGr + PoolArea + MasVnrArea + Foundation + LandSlope + 
+    MasVnrType + KitchenAbvGr + LotConfig + BsmtFinSF2 + BsmtUnfSF + 
+    Street + ScreenPorch + RoofStyle + LandContour + MoSold + 
+    Utilities + HeatingQC + MSZoning
+```
+
+
+```{r}
+m_bw <- lm(f_bw, data_clean)
+summary(m_bw)
+```
+
+
+```{r}
+m_bi <- lm(f_bi, data_clean)
+summary(m_bi)
+```
+
+Let's compare the three models: The first model, with 23 variables (f_full_reduced), demonstrates a solid fit with an adjusted R-squared of 0.872, indicating that it explains approximately 87.2% of the variance in the target variable. However, it has a relatively higher residual standard error of 2.838, suggesting some variability in the predictions. 
+
+Moving to the second model suggested by backwards elimination, with 35 variables (f_bw), we see a slight improvement in adjusted R-squared to 0.8995, indicating that the additional variables contribute to a better explanation of the variance. Nonetheless, this model still maintains a moderate residual standard error of 2.514. 
+
+Finally, the third model - the bidirectional approach, with 33 variables (f_bi), achieves the highest adjusted R-squared of 0.9029, indicating a better fit than both previous models. Moreover, it exhibits the lowest residual standard error of 2.471, suggesting more accurate predictions. Therefore, the third model strikes a balance between model complexity and predictive performance, making it the most preferable option among the three.
+
+
+```{r}
+res_red <- rstudent(m_full_reduced)
+plot(res_red ~ fitted(m_full_reduced))
+abline(0,0)
+```
+
+
+
+```{r}
+plot(res_bw ~ fitted(m_bw))
+abline(0,0)
+res_bw <- rstudent(m_bw)
+```
+
+
+```{r}
+res_bi <- rstudent(m_bi)
+plot(res_bi ~ fitted(m_bi))
+abline(0,0)
+```
+
+
+
+The residuals, which are the differences between observed and predicted SalePrice values, show a range from -39.871 to 18.455. The majority of residuals cluster around zero, but there are outliers suggesting areas where the model may be inaccurate. The low residual standard error (2.758) indicates a good fit overall, supported by high R-squared values (0.8833 and 0.879). However, outliers and missing data may affect the model's performance. Further checks on model assumptions are needed for robust conclusions.
+
+
+#Based on the model selected in the previous questions, use the test data “test” and “sample_submission” to answer the following questions:
+
+#2.8. What is the R2 for this data? The R2 must be a value between zero and one?
+
+We need to align between test data and our model in order to proceed. Test and model need to hgave the same variables and data types. 
+
+
+
+```{r}
+library(readr)
+test <- read_csv("/Users/polparracatalan/Downloads/Problem 2 to delivery-20240524/test.csv")
+head(test)
+```
+
+```{r}
+# prediction using the model
+predictions <- predict(m_full_reduced, data_clean)
+
+# view the first few predictions
+head(predictions)
+
+```
+
+
+```{r}
+# R-squared calculation
+actuals <- data_clean$SalePrice #to be checked if sale price is correct. 
+rss <- sum((predictions - actuals)^2)
+tss <- sum((actuals - mean(actuals))^2)
+r_squared <- 1 - (rss / tss)
+
+# R-squared value
+print(r_squared)
+```
+
+
+
+#2.9. What percentage of prediction intervals have the true value within the interval?
+
+To determine what percentage of prediction intervals contain the true values of the dependent variable, we first calculate these prediction intervals for each prediction from the final model. We use it with standard errors of the predictions and the appropiate critical value from the t-distribution with a confidence level of 95%. 
+
+First we predict() function again, but this time with an option to provide intervals.
+
+
+
+```{r}
+prediction_intervals <- predict(m_full_reduced, data_clean, interval = "prediction", level = 0.95)
+head(prediction_intervals)
+
+```
+
+Checking what percentage of predictions are within the predicted intervals
+#I dont know how to solve this. 
+```{r}
+prediction_intervals <- as.data.frame(prediction_intervals)
+results <- cbind(data_clean$SalePrice, prediction_intervals)
+within_interval <- with(results, SalePrice >= lwr & SalePrice <= upr)
+
+
+# percentage
+percentage_within <- mean(within_interval) * 100
+print(percentage_within)
+```
+
+
+#2.10. What is the average deviation in absolute value for the test data?
+
+To calculate the average deviation of the predictions from the actual values in absolute terms (MAE) we need the actual values of the dependent variable (the ones we have predicted) in the test dataset.
+
+```{r}
+# calculate the absolute deviations
+absolute_deviations <- abs(predictions - data_clean$SalePrice) #Im confused here, ActualValue should be changed to the output value of our predictions
+print(absolute_deviations)
+# average of these absolute deviations
+mean_absolute_error <- mean(absolute_deviations)
+print(mean_absolute_error)
+```
+
